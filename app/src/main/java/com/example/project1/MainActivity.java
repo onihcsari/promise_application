@@ -26,11 +26,11 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    public String fname=null;
-    public String str=null;
+    public String fname = null;
+    public String str = null;
     public CalendarView calendarView;
-    public Button cha_Btn,del_Btn,save_Btn;
-    public TextView textView,diaryTextView,textView2,textView3;
+    public Button cha_Btn, del_Btn, save_Btn;
+    public TextView textView, diaryTextView, textView2, textView3;
     public EditText contextEditText;
 
     int count = 0;
@@ -44,20 +44,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        contextEditText=findViewById(R.id.contextEditText);
-        calendarView=findViewById(R.id.calendarView);
-        diaryTextView=findViewById(R.id.diaryTextView);
-        save_Btn=findViewById(R.id.save_Btn);
-        del_Btn=findViewById(R.id.del_Btn);
-        cha_Btn=findViewById(R.id.cha_Btn);
-        textView2=findViewById(R.id.textView2);
-        textView3=findViewById(R.id.textView3);
+        contextEditText = findViewById(R.id.contextEditText);
+        calendarView = findViewById(R.id.calendarView);
+        diaryTextView = findViewById(R.id.diaryTextView);
+        save_Btn = findViewById(R.id.save_Btn);
+        del_Btn = findViewById(R.id.del_Btn);
+        cha_Btn = findViewById(R.id.cha_Btn);
+        textView2 = findViewById(R.id.textView2);
+        textView3 = findViewById(R.id.textView3);
 
         //로그인 및 회원가입 엑티비티에서 이름을 받아옴
-        Intent intent=getIntent();
-        String name=intent.getStringExtra("userName");
-        final String userID=intent.getStringExtra("userID");
-        textView3.setText(name+"님의 달력 일기장");
+        Intent intent = getIntent();
+        String name = intent.getStringExtra("userName");
+        final String userID = intent.getStringExtra("userID");
+        textView3.setText(name + "님의 달력 일기장");
 
         calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
@@ -68,12 +68,12 @@ public class MainActivity extends AppCompatActivity {
                 textView2.setVisibility(View.INVISIBLE);
                 cha_Btn.setVisibility(View.INVISIBLE);
                 del_Btn.setVisibility(View.INVISIBLE);
-                diaryTextView.setText(String.format("%d / %d / %d",year,month+1,dayOfMonth));
+                diaryTextView.setText(String.format("%d / %d / %d", year, month + 1, dayOfMonth));
                 contextEditText.setText("");
                 Syear = year;
                 Smonth = month;
                 Sday = dayOfMonth;
-                checkDay(year,month,dayOfMonth,userID);
+                checkDay(year, month, dayOfMonth, userID);
             }
         });
         // save_Btn.setOnClickListener(new View.OnClickListener() {
@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
 //        });
     }
 
-    public void clickBtn(View view){
+    public void clickBtn(View view) {
         ArrayList<Integer> input = new ArrayList<Integer>();
         input.add(Syear);
         input.add(Smonth);
@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
         read();
     }
 
-    public void read(){
+    public void read() {
         reference.child("DB").child("USER").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -128,18 +128,18 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void  checkDay(int cYear,int cMonth,int cDay,String userID){
-        fname=""+userID+cYear+"-"+(cMonth+1)+""+"-"+cDay+".txt";//저장할 파일 이름설정
-        FileInputStream fis=null;//FileStream fis 변수
+    public void checkDay(int cYear, int cMonth, int cDay, String userID) {
+        fname = "" + userID + cYear + "-" + (cMonth + 1) + "" + "-" + cDay + ".txt";//저장할 파일 이름설정
+        FileInputStream fis = null;//FileStream fis 변수
 
-        try{
-            fis=openFileInput(fname);
+        try {
+            fis = openFileInput(fname);
 
-            byte[] fileData=new byte[fis.available()];
+            byte[] fileData = new byte[fis.available()];
             fis.read(fileData);
             fis.close();
 
-            str=new String(fileData);
+            str = new String(fileData);
 
             contextEditText.setVisibility(View.INVISIBLE);
             textView2.setVisibility(View.VISIBLE);
@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
                     removeDiary(fname);
                 }
             });
-            if(textView2.getText()==null){
+            if (textView2.getText() == null) {
                 textView2.setVisibility(View.INVISIBLE);
                 diaryTextView.setVisibility(View.VISIBLE);
                 save_Btn.setVisibility(View.VISIBLE);
@@ -184,34 +184,36 @@ public class MainActivity extends AppCompatActivity {
                 contextEditText.setVisibility(View.VISIBLE);
             }
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    @SuppressLint("WrongConstant")
-    public void removeDiary(String readDay){
-        FileOutputStream fos=null;
 
-        try{
-            fos=openFileOutput(readDay,MODE_NO_LOCALIZED_COLLATORS);
-            String content="";
+    @SuppressLint("WrongConstant")
+    public void removeDiary(String readDay) {
+        FileOutputStream fos = null;
+
+        try {
+            fos = openFileOutput(readDay, MODE_NO_LOCALIZED_COLLATORS);
+            String content = "";
             fos.write((content).getBytes());
             fos.close();
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    @SuppressLint("WrongConstant")
-    public void saveDiary(String readDay){
-        FileOutputStream fos=null;
 
-        try{
-            fos=openFileOutput(readDay,MODE_NO_LOCALIZED_COLLATORS);
-            String content=contextEditText.getText().toString();
+    @SuppressLint("WrongConstant")
+    public void saveDiary(String readDay) {
+        FileOutputStream fos = null;
+
+        try {
+            fos = openFileOutput(readDay, MODE_NO_LOCALIZED_COLLATORS);
+            String content = contextEditText.getText().toString();
             fos.write((content).getBytes());
             fos.close();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

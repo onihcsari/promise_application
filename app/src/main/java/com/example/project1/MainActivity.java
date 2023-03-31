@@ -5,7 +5,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -22,6 +26,8 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -43,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        getAppKeyHash();
 
         contextEditText = findViewById(R.id.contextEditText);
         calendarView = findViewById(R.id.calendarView);
@@ -172,7 +179,6 @@ public class MainActivity extends AppCompatActivity {
                     save_Btn.setVisibility(View.VISIBLE);
                     cha_Btn.setVisibility(View.INVISIBLE);
                     del_Btn.setVisibility(View.INVISIBLE);
-                    removeDiary(fname);
                 }
             });
             if (textView2.getText() == null) {
@@ -188,33 +194,21 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-
-    @SuppressLint("WrongConstant")
-    public void removeDiary(String readDay) {
-        FileOutputStream fos = null;
-
+    private void getAppKeyHash() {
         try {
-            fos = openFileOutput(readDay, MODE_NO_LOCALIZED_COLLATORS);
-            String content = "";
-            fos.write((content).getBytes());
-            fos.close();
-
-        } catch (Exception e) {
+            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES);
+            for (Signature signature : info.signatures) {
+                MessageDigest md;
+                md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                String something = new String(Base64.encode(md.digest(), 0));
+                Log.e("Hash key", something);
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e("name not found", e.toString());
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
     }
 
-    @SuppressLint("WrongConstant")
-    public void saveDiary(String readDay) {
-        FileOutputStream fos = null;
-
-        try {
-            fos = openFileOutput(readDay, MODE_NO_LOCALIZED_COLLATORS);
-            String content = contextEditText.getText().toString();
-            fos.write((content).getBytes());
-            fos.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

@@ -12,6 +12,12 @@ public class Place {
     @SerializedName("longitude")
     private double y;
 
+    @SerializedName("address")
+    private String address;
+
+    public String getAddress(){
+        return address;
+    }
     public String getPlaceName() {
         return placeName;
     }

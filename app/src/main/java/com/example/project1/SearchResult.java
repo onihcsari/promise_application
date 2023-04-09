@@ -6,13 +6,16 @@ import java.util.List;
 
 public class SearchResult {
     @SerializedName("documents")
-    private List<Place> documents;
+    public List<Document> documents;
 
-    public List<Place> getDocuments() {
-        return documents;
-    }
+    public static class Document {
+        @SerializedName("place_name")
+        public String place_name;
 
-    public void setDocuments(List<Place> documents) {
-        this.documents = documents;
+        @SerializedName("x")
+        public double longitude;
+
+        @SerializedName("y")
+        public double latitude;
     }
 }

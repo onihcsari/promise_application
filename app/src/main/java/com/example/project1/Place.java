@@ -3,46 +3,25 @@ package com.example.project1;
 import com.google.gson.annotations.SerializedName;
 
 public class Place {
-    @SerializedName("place_name")
-    private String placeName;
+    private String name;
+    private double latitude;
+    private double longitude;
 
-    @SerializedName("latitude")
-    private double x;
-
-    @SerializedName("longitude")
-    private double y;
-
-    @SerializedName("address")
-    private String address;
-
-    public String getAddress(){
-        return address;
-    }
-    public String getPlaceName() {
-        return placeName;
+    public Place(String name, double latitude, double longitude) {
+        this.name = name;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
-    public String toString(){
-        return placeName;
-    }
-
-    public void setPlaceName(String placeName) {
-        this.placeName = placeName;
+    public String getName() {
+        return name;
     }
 
     public double getLatitude() {
-        return x;
-    }
-
-    public void setLatitude(double latitude) {
-        this.x = latitude;
+        return latitude;
     }
 
     public double getLongitude() {
-        return y;
-    }
-
-    public void setLongitude(double longitude) {
-        this.y = longitude;
+        return longitude;
     }
 }

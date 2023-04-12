@@ -1,5 +1,6 @@
 package com.example.project1;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
@@ -14,6 +15,9 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -41,6 +45,8 @@ public class SubActivity extends AppCompatActivity {
     public TimePickerDialog timePickerDialog;
     public DatePickerDialog datePickerDialog;
 
+    private ActivityResultLauncher<Intent> mapActivityResultLauncher;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,6 +66,15 @@ public class SubActivity extends AppCompatActivity {
         editTextDate = findViewById(R.id.editTextDate);
         btn_OK = findViewById(R.id.button_OK);
 
+        mapActivityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        String address = result.getData().getStringExtra("address");
+                        EditText editText = findViewById(R.id.editTextLocation);
+                        editText.setText(address);
+                    }
+                });
 
         Calendar calendar = Calendar.getInstance();
         int pYear = calendar.get(Calendar.YEAR);
@@ -99,34 +114,41 @@ public class SubActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(SubActivity.this, MapActivity.class);
-                startActivity(intent);
+                mapActivityResultLauncher.launch(intent);
             }
         });
 
-//        btn_OK.setOnClickListener(new View.OnClickListener() {
-//             @Override
-//             public void onClick(View view) {
-//                 addDBfile(editText2.getText().toString(), editText3.getText().toString(),
-//                         editText4.getText().toString(), editText5.getText().toString(),
-//                         year, month+1, day, hour, minute);
-//                 finish();
-//             }
-//        });
+        btn_OK.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View view) {
+                 addDBfile(editTextDate.getText().toString(), editTextTime.getText().toString(),
+                         editTextTitle.getText().toString(), editTextLocation.getText().toString(),
+                         editTextCategory.getText().toString(), editTextNumber.getText().toString());
+                 finish();
+             }
+        });
     }
 
-    public void addDBfile(String location, String name, String what, String number, int year, int month, int day, int hour, int minute) {
-        DBfile DBfile = new DBfile(location, name, what, number, year, month, day, hour, minute);
+    public void addDBfile(String Date, String Time, String Title, String Location, String Category, String Number) {
+        DBfile DBfile = new DBfile(Date, Time, Title, Location, Category, Number);
+        databaseReference.child("DB").child("USER").child("date").setValue(DBfile.getDate());
+        databaseReference.child("DB").child("USER").child("time").setValue(DBfile.getTime());
+        databaseReference.child("DB").child("USER").child("title").setValue(DBfile.getTitle());
         databaseReference.child("DB").child("USER").child("location").setValue(DBfile.getLocation());
-        databaseReference.child("DB").child("USER").child("name").setValue(DBfile.getName());
-        databaseReference.child("DB").child("USER").child("what").setValue(DBfile.getWhat());
+        databaseReference.child("DB").child("USER").child("category").setValue(DBfile.getCategory());
         databaseReference.child("DB").child("USER").child("number").setValue(DBfile.getNumber());
-        databaseReference.child("DB").child("USER").child("year").setValue(DBfile.getYear());
-        databaseReference.child("DB").child("USER").child("month").setValue(DBfile.getMonth());
-        databaseReference.child("DB").child("USER").child("day").setValue(DBfile.getDay());
-        databaseReference.child("DB").child("USER").child("hour").setValue(DBfile.getHour());
-        databaseReference.child("DB").child("USER").child("minute").setValue(DBfile.getMinute());
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 100 && resultCode == Activity.RESULT_OK && data != null) {
+            String address = data.getStringExtra("address");
+            EditText editText = findViewById(R.id.editTextLocation);
+            editText.setText(address);
+        }
+    }
 
     public void processDatePickerResult(int year, int month, int day) {
         String month_string = Integer.toString(month + 1);

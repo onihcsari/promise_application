@@ -1,6 +1,7 @@
 package com.example.project1;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -15,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import net.daum.mf.map.api.MapPOIItem;
 import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapView;
 
@@ -27,7 +29,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MapActivity extends AppCompatActivity implements MapView.CurrentLocationEventListener, MapView.MapViewEventListener{
+public class MapActivity extends AppCompatActivity implements MapView.CurrentLocationEventListener, MapView.MapViewEventListener, MapView.POIItemEventListener{
     private static final String BASE_URL = "https://dapi.kakao.com";
     private static final String KAKAO_API_KEY = "0b289b1ef91f12a6ae8a369ddd779e6a";
     private boolean hasMovedToInitialLocation = false;
@@ -49,6 +51,9 @@ public class MapActivity extends AppCompatActivity implements MapView.CurrentLoc
         mapView.setShowCurrentLocationMarker(true);
         mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
         mapView.setMapViewEventListener(this);
+        mapView.setPOIItemEventListener(this);
+
+
 
         ViewGroup mapViewContainer = findViewById(R.id.map_view_container);
         mapViewContainer.addView(mapView);
@@ -95,6 +100,16 @@ public class MapActivity extends AppCompatActivity implements MapView.CurrentLoc
             public void onItemClick(Place place) {
                 MapPoint mapPoint = MapPoint.mapPointWithGeoCoord(place.getLatitude(), place.getLongitude());
                 mapView.setMapCenterPoint(mapPoint, true);
+
+                // 마커 추가
+                MapPOIItem marker = new MapPOIItem();
+                marker.setItemName(place.getName());
+                marker.setTag(0);
+                marker.setMapPoint(mapPoint);
+                marker.setMarkerType(MapPOIItem.MarkerType.BluePin); // 기본적인 BluePin 마커 사용
+                marker.setSelectedMarkerType(MapPOIItem.MarkerType.RedPin); // 마커 선택 시 RedPin 마커 사용
+
+                mapView.addPOIItem(marker);
             }
         });
 
@@ -126,6 +141,18 @@ public class MapActivity extends AppCompatActivity implements MapView.CurrentLoc
             }
         });
     }
+
+    private void addMarker(Place place) {
+        MapPOIItem marker = new MapPOIItem();
+        marker.setItemName(place.getName());
+        marker.setTag(0);
+        marker.setMapPoint(MapPoint.mapPointWithGeoCoord(place.getLatitude(), place.getLongitude()));
+        marker.setMarkerType(MapPOIItem.MarkerType.BluePin);
+        marker.setSelectedMarkerType(MapPOIItem.MarkerType.RedPin);
+
+        mapView.addPOIItem(marker);
+    }
+
     @Override
     public void onCurrentLocationUpdate(MapView mapView, MapPoint currentLocation, float v) {
         if (!hasMovedToInitialLocation) {
@@ -181,6 +208,30 @@ public class MapActivity extends AppCompatActivity implements MapView.CurrentLoc
     private void hideSearchResultList() {
         findViewById(R.id.recycler_view).setVisibility(View.GONE);
         findViewById(R.id.map_overlay).setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onPOIItemSelected(MapView mapView, MapPOIItem mapPOIItem) {
+        MapPoint mapPoint = mapPOIItem.getMapPoint();
+        mapView.setMapCenterPoint(mapPoint, true);
+    }
+
+    @Override
+    public void onCalloutBalloonOfPOIItemTouched(MapView mapView, MapPOIItem mapPOIItem) {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("address", mapPOIItem.getItemName());
+        setResult(RESULT_OK, resultIntent);
+        finish();
+    }
+
+    @Override
+    public void onCalloutBalloonOfPOIItemTouched(MapView mapView, MapPOIItem mapPOIItem, MapPOIItem.CalloutBalloonButtonType calloutBalloonButtonType) {
+
+    }
+
+    @Override
+    public void onDraggablePOIItemMoved(MapView mapView, MapPOIItem mapPOIItem, MapPoint mapPoint) {
+
     }
 }
 

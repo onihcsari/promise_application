@@ -17,5 +17,6 @@ public class SearchResult {
 
         @SerializedName("y")
         public double latitude;
+
     }
 }

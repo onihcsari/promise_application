@@ -24,4 +24,5 @@ public class Place {
     public double getLongitude() {
         return longitude;
     }
+
 }

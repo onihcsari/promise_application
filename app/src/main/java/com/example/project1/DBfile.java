@@ -1,5 +1,7 @@
 package com.example.project1;
 
+import java.util.Date;
+
 public class DBfile {
     String date;
     String time;
@@ -26,6 +28,24 @@ public class DBfile {
     }
     public String getNumber() {
         return number;
+    }
+    public void setDate(String date) {
+        this.date = date;
+    }
+    public void setTime(String time) {
+        this.time = time;
+    }
+    public void setTitle(String title) {
+        this.title = title;
+    }
+    public void setLocation(String location) {
+        this.location = location;
+    }
+    public void setCategory(String category) {
+        this.category = category;
+    }
+    public void setNumber(String number) {
+        this.number = number;
     }
 
     //값을 추가할때 쓰는 함수, MainActivity에서 addanimal함수에서 사용할 것임.

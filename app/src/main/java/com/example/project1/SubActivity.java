@@ -1,11 +1,14 @@
 package com.example.project1;
 
+import static android.content.ContentValues.TAG;
+
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -23,6 +26,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -31,6 +36,9 @@ import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapView;
 
 import java.sql.Time;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -65,6 +73,7 @@ public class SubActivity extends AppCompatActivity {
         editTextNumber = findViewById(R.id.editTextNumber);
         editTextDate = findViewById(R.id.editTextDate);
         btn_OK = findViewById(R.id.button_OK);
+        DateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
         mapActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -89,8 +98,19 @@ public class SubActivity extends AppCompatActivity {
                 datePickerDialog = new DatePickerDialog(SubActivity.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                        String str_month="", str_day="";
                         month = month + 1;
-                        String date = year + "/" + month + "/" + day;
+                        if(month<10){
+                            str_month = "0" + month;
+                        } else {
+                            str_month = String.valueOf(month);
+                        }
+                        if(day<10){
+                            str_day = "0" + day;
+                        } else {
+                            str_day = String.valueOf(day);
+                        }
+                        String date = year + "-" + str_month + "-" + str_day;
                         editTextDate.setText(date);
                     }
                 }, pYear, pMonth, pDay);
@@ -130,13 +150,29 @@ public class SubActivity extends AppCompatActivity {
     }
 
     public void addDBfile(String Date, String Time, String Title, String Location, String Category, String Number) {
-        DBfile DBfile = new DBfile(Date, Time, Title, Location, Category, Number);
-        databaseReference.child("DB").child("USER").child("date").setValue(DBfile.getDate());
-        databaseReference.child("DB").child("USER").child("time").setValue(DBfile.getTime());
-        databaseReference.child("DB").child("USER").child("title").setValue(DBfile.getTitle());
-        databaseReference.child("DB").child("USER").child("location").setValue(DBfile.getLocation());
-        databaseReference.child("DB").child("USER").child("category").setValue(DBfile.getCategory());
-        databaseReference.child("DB").child("USER").child("number").setValue(DBfile.getNumber());
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
+
+        if (currentUser != null) {
+            String userId = currentUser.getUid();
+            DatabaseReference userRef = databaseRef.child("DB").child(userId);
+
+            DBfile DBfile = new DBfile(Date, Time, Title, Location, Category, Number);
+            String eventKey = userRef.push().getKey();
+
+            if (eventKey != null) {
+                userRef.child(eventKey).child("date").setValue(DBfile.getDate());
+                userRef.child(eventKey).child("time").setValue(DBfile.getTime());
+                userRef.child(eventKey).child("title").setValue(DBfile.getTitle());
+                userRef.child(eventKey).child("location").setValue(DBfile.getLocation());
+                userRef.child(eventKey).child("category").setValue(DBfile.getCategory());
+                userRef.child(eventKey).child("number").setValue(DBfile.getNumber());
+            } else {
+                Log.w(TAG, "Error generating event key");
+            }
+        } else {
+            Log.w(TAG, "No current user");
+        }
     }
 
     @Override

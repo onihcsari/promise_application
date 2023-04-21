@@ -18,16 +18,18 @@
         android:theme="@style/Theme.Project1"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".month_display"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <meta-data android:name="com.kakao.sdk.AppKey"
             android:value="d895188df2fb9c61af19815c1aa61ab0"/>
+        <activity android:name=".MainActivity"/>
+        <activity android:name=".loginActivity2"/>
+        <activity android:name=".SignupActivity"/>
         <activity android:name=".SubActivity"/>
         <activity android:name=".MapActivity"/>
 

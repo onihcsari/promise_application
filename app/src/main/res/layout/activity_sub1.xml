@@ -7,7 +7,7 @@
     android:id="@+id/parent_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".month_display">
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -18,8 +18,8 @@
 
         <com.prolificinteractive.materialcalendarview.MaterialCalendarView
             android:id="@+id/calendarView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="410dp"
+            android:layout_height="439dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
@@ -28,6 +28,17 @@
             app:layout_constraintVertical_bias="0.207"
             app:mcv_calendarMode="month"
             app:mcv_showOtherDates="none" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="414dp"
+            android:layout_height="96dp"
+            android:layout_marginBottom="135dp"
+            android:text="TextView"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/calendarView" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

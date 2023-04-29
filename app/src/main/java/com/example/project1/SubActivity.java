@@ -3,33 +3,52 @@ package com.example.project1;
 import static android.content.ContentValues.TAG;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.app.TimePickerDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.SignInMethodQueryResult;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import net.daum.mf.map.api.MapPOIItem;
 import net.daum.mf.map.api.MapPoint;
@@ -46,8 +65,8 @@ import java.util.Date;
 
 public class SubActivity extends AppCompatActivity {
 
-    public Button btn_selectDate, btn_selectTime, btn_OK, btn_map;
-    public EditText editTextDate, editTextTime, editTextTitle, editTextLocation, editTextCategory, editTextNumber;
+    public Button btn_selectDate, btn_selectTime, btn_OK, btn_map, btn_share;
+    public EditText editTextDate, editTextTime, editTextTitle, editTextLocation, editTextCategory, editTextNumber, editTextUID;
     public FirebaseDatabase database = FirebaseDatabase.getInstance();
     public DatabaseReference databaseReference = database.getReference();
     public TimePickerDialog timePickerDialog;
@@ -72,7 +91,9 @@ public class SubActivity extends AppCompatActivity {
         editTextCategory = findViewById(R.id.editTextCategory);
         editTextNumber = findViewById(R.id.editTextNumber);
         editTextDate = findViewById(R.id.editTextDate);
+        editTextUID = findViewById(R.id.editTextUID);
         btn_OK = findViewById(R.id.button_OK);
+        btn_share = findViewById(R.id.btn_share);
         DateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
         mapActivityResultLauncher = registerForActivityResult(
@@ -98,14 +119,14 @@ public class SubActivity extends AppCompatActivity {
                 datePickerDialog = new DatePickerDialog(SubActivity.this, new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker datePicker, int year, int month, int day) {
-                        String str_month="", str_day="";
+                        String str_month = "", str_day = "";
                         month = month + 1;
-                        if(month<10){
+                        if (month < 10) {
                             str_month = "0" + month;
                         } else {
                             str_month = String.valueOf(month);
                         }
-                        if(day<10){
+                        if (day < 10) {
                             str_day = "0" + day;
                         } else {
                             str_day = String.valueOf(day);
@@ -139,16 +160,36 @@ public class SubActivity extends AppCompatActivity {
         });
 
         btn_OK.setOnClickListener(new View.OnClickListener() {
-             @Override
-             public void onClick(View view) {
-                 addDBfile(editTextDate.getText().toString(), editTextTime.getText().toString(),
-                         editTextTitle.getText().toString(), editTextLocation.getText().toString(),
-                         editTextCategory.getText().toString(), editTextNumber.getText().toString());
-                 finish();
-             }
+            @Override
+            public void onClick(View view) {
+                addDBfile(editTextDate.getText().toString(), editTextTime.getText().toString(),
+                        editTextTitle.getText().toString(), editTextLocation.getText().toString(),
+                        editTextCategory.getText().toString(), editTextNumber.getText().toString());
+                finish();
+            }
+        });
+
+        btn_share.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String uid = editTextUID.getText().toString();
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("DB").child(uid);
+                DBfile dbfile = new DBfile(editTextDate.getText().toString(), editTextTime.getText().toString(),
+                        editTextTitle.getText().toString(), editTextLocation.getText().toString(),
+                        editTextCategory.getText().toString(), editTextNumber.getText().toString());
+                String eventKey = ref.push().getKey();
+                if (eventKey != null) {
+                    ref.child(eventKey).child("date").setValue(dbfile.getDate());
+                    ref.child(eventKey).child("time").setValue(dbfile.getTime());
+                    ref.child(eventKey).child("title").setValue(dbfile.getTitle());
+                    ref.child(eventKey).child("location").setValue(dbfile.getLocation());
+                    ref.child(eventKey).child("category").setValue(dbfile.getCategory());
+                    ref.child(eventKey).child("number").setValue(dbfile.getNumber());
+                }
+                editTextUID.setText("");
+            }
         });
     }
-
     public void addDBfile(String Date, String Time, String Title, String Location, String Category, String Number) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
@@ -185,6 +226,7 @@ public class SubActivity extends AppCompatActivity {
             editText.setText(address);
         }
     }
+
 
     public void processDatePickerResult(int year, int month, int day) {
         String month_string = Integer.toString(month + 1);

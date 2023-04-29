@@ -129,4 +129,33 @@
         app:layout_constraintStart_toEndOf="@+id/editTextLocation"
         app:layout_constraintTop_toBottomOf="@+id/editTextTitle" />
 
+    <Button
+        android:id="@+id/btn_share"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="140dp"
+        android:layout_marginBottom="170dp"
+        android:text="약속 공유"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTextNumber" />
+
+    <EditText
+        android:id="@+id/editTextUID"
+        android:layout_width="300dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="141dp"
+        android:layout_marginEnd="93dp"
+        android:layout_marginBottom="69dp"
+        android:ems="10"
+        android:hint="UID"
+        android:inputType="textPersonName"
+        app:layout_constraintBottom_toTopOf="@+id/button_OK"
+        app:layout_constraintEnd_toStartOf="@+id/btn_share"
+        app:layout_constraintHorizontal_bias="0.088"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTextNumber"
+        app:layout_constraintVertical_bias="1.0" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

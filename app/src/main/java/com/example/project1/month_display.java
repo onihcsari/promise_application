@@ -221,7 +221,12 @@ public class month_display extends AppCompatActivity {
                     String location = snapshot.child("location").getValue(String.class);
                     String category = snapshot.child("category").getValue(String.class);
                     String number = snapshot.child("number").getValue(String.class);
-                    DBfile dbfile = new DBfile(date, time, title, location, category, number);
+                    List<String> uid = new ArrayList<>();
+                    for (DataSnapshot uidSnapshot : snapshot.child("uid").getChildren()) {
+                        String uidValue = uidSnapshot.getValue(String.class);
+                        uid.add(uidValue);
+                    }
+                    DBfile dbfile = new DBfile(date, time, title, location, category, number, uid);
                     events.add(dbfile);
                 }
 

@@ -184,13 +184,17 @@ public class Sharemap extends AppCompatActivity {
 
     // Firebase Realtime Database에서 다른 사용자의 위치 정보를 가져오는 메소드입니다.
     private void loadOtherUserLocations() {
+        String uid = mAuth.getCurrentUser().getUid(); // 현재 사용자의 UID 가져오기
         databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String previousChildName) {
-                SerializableLocation location = dataSnapshot.getValue(SerializableLocation.class);
-                if (location != null) {
-                    mapView.removeAllPOIItems(); // 기존 마커 제거
-                    updateMarker(dataSnapshot.getKey(), location.getLatitude(), location.getLongitude());
+                String userId = dataSnapshot.getKey();
+                if (!userId.equals(uid)) { // 현재 사용자의 UID와 다른 사용자의 UID 비교
+                    SerializableLocation location = dataSnapshot.getValue(SerializableLocation.class);
+                    if (location != null) {
+                        mapView.removeAllPOIItems(); // 기존 마커 제거
+                        updateMarker(userId, location.getLatitude(), location.getLongitude());
+                    }
                 }
             }
             @Override

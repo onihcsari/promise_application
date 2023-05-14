@@ -4,79 +4,59 @@ import static android.content.ContentValues.TAG;
 
 import android.app.Activity;
 import android.app.AlarmManager;
-import android.app.AlertDialog;
 import android.app.DatePickerDialog;
-import android.app.Dialog;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.TextUtils;
+import android.text.InputType;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.PopupWindow;
-import android.widget.TextView;
+import android.widget.LinearLayout;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.DialogFragment;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.SignInMethodQueryResult;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
-import net.daum.mf.map.api.MapPOIItem;
-import net.daum.mf.map.api.MapPoint;
-import net.daum.mf.map.api.MapView;
-
-import java.sql.Time;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 
 public class SubActivity extends AppCompatActivity {
 
-    public Button btn_selectDate, btn_selectTime, btn_OK, btn_map, btn_share;
+    public Button btn_selectDate, btn_selectTime, btn_OK, btn_map, btn_check;
     public EditText editTextDate, editTextTime, editTextTitle, editTextLocation, editTextCategory, editTextNumber, editTextUID;
     public FirebaseDatabase database = FirebaseDatabase.getInstance();
     public DatabaseReference databaseReference = database.getReference();
     public TimePickerDialog timePickerDialog;
     public DatePickerDialog datePickerDialog;
     private AlarmManager alarmManager;
+    private LinearLayout layoutUidContainer;
+    private List<EditText> uidEditTextList = new ArrayList<>(); // UID 입력 필드 리스트
+    public FirebaseAuth mAuth;
+
+
+
 
 
     private ActivityResultLauncher<Intent> mapActivityResultLauncher;
@@ -92,16 +72,21 @@ public class SubActivity extends AppCompatActivity {
         btn_map = findViewById(R.id.btn_map);
         btn_selectDate = findViewById(R.id.btn_selectDate);
         btn_selectTime = findViewById(R.id.btn_selectTime);
+        btn_check = findViewById(R.id.btn_check);
         editTextTitle = findViewById(R.id.editTextTitle);
         editTextTime = findViewById(R.id.editTextTime);
         editTextLocation = findViewById(R.id.editTextLocation);
         editTextCategory = findViewById(R.id.editTextCategory);
         editTextNumber = findViewById(R.id.editTextNumber);
         editTextDate = findViewById(R.id.editTextDate);
-        editTextUID = findViewById(R.id.editTextUID);
+        // editTextUID = findViewById(R.id.editTextUID);
         btn_OK = findViewById(R.id.button_OK);
-        btn_share = findViewById(R.id.btn_share);
+        layoutUidContainer = findViewById(R.id.layout_uid_container);
+
         DateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        databaseReference = FirebaseDatabase.getInstance().getReference();
+        mAuth = FirebaseAuth.getInstance();
+        String myUID = mAuth.getCurrentUser().getUid();
 
         mapActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -166,13 +151,47 @@ public class SubActivity extends AppCompatActivity {
             }
         });
 
+        btn_check.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int uidCount = Integer.parseInt(editTextNumber.getText().toString());
+                updateUidFields(uidCount);
+                EditText uidEditText = new EditText(SubActivity.this);
+                uidEditText.setLayoutParams(new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                ));
+                uidEditText.setText(myUID);
+                uidEditText.setEnabled(false);
+                layoutUidContainer.addView(uidEditText);
+                uidEditTextList.add(uidEditText);
+            }
+        });
+
         btn_OK.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                addDBfile(editTextDate.getText().toString(), editTextTime.getText().toString(),
-                        editTextTitle.getText().toString(), editTextLocation.getText().toString(),
-                        editTextCategory.getText().toString(), editTextNumber.getText().toString());
-
+                List<String> uidList = new ArrayList<>();
+                for (int i = 0; i < uidEditTextList.size(); i++) {
+                    uidList.add(uidEditTextList.get(i).getText().toString());
+                }
+                for (int i = 0; i < uidEditTextList.size(); i++) {
+                    String uid = uidList.get(i);
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("DB").child(uid);
+                    DBfile dbfile = new DBfile(editTextDate.getText().toString(), editTextTime.getText().toString(),
+                            editTextTitle.getText().toString(), editTextLocation.getText().toString(),
+                            editTextCategory.getText().toString(), editTextNumber.getText().toString(), uidList);
+                    String eventKey = ref.push().getKey();
+                    if (eventKey != null) {
+                        ref.child(eventKey).child("date").setValue(dbfile.getDate());
+                        ref.child(eventKey).child("time").setValue(dbfile.getTime());
+                        ref.child(eventKey).child("title").setValue(dbfile.getTitle());
+                        ref.child(eventKey).child("location").setValue(dbfile.getLocation());
+                        ref.child(eventKey).child("category").setValue(dbfile.getCategory());
+                        ref.child(eventKey).child("number").setValue(dbfile.getNumber());
+                        ref.child(eventKey).child("uid").setValue(dbfile.getUid());
+                    }
+                }
                 Context context = SubActivity.this;
                 // 알림 예약을 위한 PendingIntent 생성
 
@@ -232,28 +251,30 @@ public class SubActivity extends AppCompatActivity {
                 }
             }
         });
-        btn_share.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String uid = editTextUID.getText().toString();
-                DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("DB").child(uid);
-                DBfile dbfile = new DBfile(editTextDate.getText().toString(), editTextTime.getText().toString(),
-                        editTextTitle.getText().toString(), editTextLocation.getText().toString(),
-                        editTextCategory.getText().toString(), editTextNumber.getText().toString());
-                String eventKey = ref.push().getKey();
-                if (eventKey != null) {
-                    ref.child(eventKey).child("date").setValue(dbfile.getDate());
-                    ref.child(eventKey).child("time").setValue(dbfile.getTime());
-                    ref.child(eventKey).child("title").setValue(dbfile.getTitle());
-                    ref.child(eventKey).child("location").setValue(dbfile.getLocation());
-                    ref.child(eventKey).child("category").setValue(dbfile.getCategory());
-                    ref.child(eventKey).child("number").setValue(dbfile.getNumber());
-                }
-                editTextUID.setText("");
-            }
-        });
     }
-    public void addDBfile(String Date, String Time, String Title, String Location, String Category, String Number) {
+//        btn_share.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                String uid = editTextUID.getText().toString();
+//                DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("DB").child(uid);
+//                DBfile dbfile = new DBfile(editTextDate.getText().toString(), editTextTime.getText().toString(),
+//                        editTextTitle.getText().toString(), editTextLocation.getText().toString(),
+//                        editTextCategory.getText().toString(), editTextNumber.getText().toString());
+//                String eventKey = ref.push().getKey();
+//                if (eventKey != null) {
+//                    ref.child(eventKey).child("date").setValue(dbfile.getDate());
+//                    ref.child(eventKey).child("time").setValue(dbfile.getTime());
+//                    ref.child(eventKey).child("title").setValue(dbfile.getTitle());
+//                    ref.child(eventKey).child("location").setValue(dbfile.getLocation());
+//                    ref.child(eventKey).child("category").setValue(dbfile.getCategory());
+//                    ref.child(eventKey).child("number").setValue(dbfile.getNumber());
+//                    //ref.child(eventKey).child("uid").setValue(dbfile.getUID());
+//                }
+//                editTextUID.setText("");
+//            }
+//        });
+
+/*    public void addDBfile(String Date, String Time, String Title, String Location, String Category, String Number, String[] uidArray) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
 
@@ -271,13 +292,14 @@ public class SubActivity extends AppCompatActivity {
                 userRef.child(eventKey).child("location").setValue(DBfile.getLocation());
                 userRef.child(eventKey).child("category").setValue(DBfile.getCategory());
                 userRef.child(eventKey).child("number").setValue(DBfile.getNumber());
+                // userRef.child(eventKey).child("uid").setValue(DBfile.getUID());
             } else {
                 Log.w(TAG, "Error generating event key");
             }
         } else {
             Log.w(TAG, "No current user");
         }
-    }
+    }*/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -290,6 +312,20 @@ public class SubActivity extends AppCompatActivity {
         }
     }
 
+    private void updateUidFields(int uidCount) {
+        layoutUidContainer.removeAllViews();
+
+        for (int i = 0; i < uidCount-1; i++) {
+            EditText editTextUid = new EditText(this);
+            LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            layoutParams.setMargins(0, 10, 0, 0);
+            editTextUid.setLayoutParams(layoutParams);
+            editTextUid.setHint("UID");
+            editTextUid.setInputType(InputType.TYPE_CLASS_TEXT);
+            layoutUidContainer.addView(editTextUid);
+            uidEditTextList.add(editTextUid);
+        }
+    }
 
     public void processDatePickerResult(int year, int month, int day) {
         String month_string = Integer.toString(month + 1);

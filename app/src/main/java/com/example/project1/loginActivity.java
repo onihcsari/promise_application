@@ -7,28 +7,55 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
 import com.kakao.sdk.common.KakaoSdk;
 import com.kakao.sdk.user.UserApiClient;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 
 public class loginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
+    private EditText emailEditText;
+    private EditText passwordEditText;
+    private Button loginButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        mAuth = FirebaseAuth.getInstance();
+
+        emailEditText = findViewById(R.id.emailEditText);
+        passwordEditText = findViewById(R.id.passwordEditText);
+        loginButton = findViewById(R.id.loginButton);
+
+        if(mAuth.getCurrentUser() != null){
+            startActivity(new Intent(loginActivity.this, month_display.class));
+            finish();
+        }
+
         Button loginButton = findViewById(R.id.loginButton);
+
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(loginActivity.this, loginActivity2.class);
-                startActivity(intent);
+                String email = emailEditText.getText().toString();
+                String password = passwordEditText.getText().toString();
+                if (email.isEmpty())
+                    Toast.makeText(loginActivity.this, "아이디를 입력하세요", Toast.LENGTH_SHORT).show();
+                else if(password.isEmpty())
+                    Toast.makeText(loginActivity.this, "비밀번호를 입력하세요", Toast.LENGTH_SHORT).show();
+                else
+                    signIn(email, password);
             }
         });
 
@@ -40,33 +67,21 @@ public class loginActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
-        Button kakaoLoginButton = findViewById(R.id.kakao_login_button);
-        kakaoLoginButton.setOnClickListener(v -> {
-            // 카카오 로그인 실행
-            loginWithKakao();
-        });
     }
-    private void loginWithKakao() {
-        KakaoSdk.init(this, "d895188df2fb9c61af19815c1aa61ab0");
-        UserApiClient.getInstance().loginWithKakaoTalk(this, (oAuthToken, error) -> {
-            if (error != null) {
-                Log.e(TAG, "카카오 로그인 실패", error);
-            } else if (oAuthToken != null) {
-                Log.i(TAG, "카카오 로그인 성공");
 
-                // 사용자 정보 요청
-                UserApiClient.getInstance().me((user, userError) -> {
-                    if (userError != null) {
-                        Log.e(TAG, "사용자 정보 요청 실패", userError);
-                    } else {
-                        Log.i(TAG, "사용자 정보 요청 성공: " + user.toString());
-                        // 로그인 성공 후 처리를 구현하세요.
+    private void signIn(String email, String password) {
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(loginActivity.this, "로그인 성공", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(loginActivity.this, MainActivity.class);
+                            startActivity(intent);
+                        } else {
+                            Toast.makeText(loginActivity.this, "로그인 실패", Toast.LENGTH_SHORT).show();
+                        }
                     }
-                    return null;
                 });
-            }
-            return null;
-        });
     }
 }

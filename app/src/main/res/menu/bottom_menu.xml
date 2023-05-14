@@ -4,12 +4,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/menu_setting"
-        android:enabled="true"
-        android:icon="@drawable/ic_settings"
-        android:title="관리"
-        app:showAsAction="always" />
-    <item
         android:id="@+id/menu_home"
         android:enabled="true"
         android:icon="@drawable/ic_home"

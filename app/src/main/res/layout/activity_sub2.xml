@@ -7,15 +7,30 @@
     tools:context=".SubActivity">
 
     <EditText
-        android:id="@+id/editTextCategory"
+        android:id="@+id/editTextNumber"
         android:layout_width="413dp"
         android:layout_height="47dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
+        android:ems="10"
+        android:hint="약속 인원"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTextCategory" />
+
+    <EditText
+        android:id="@+id/editTextCategory"
+        android:layout_width="399dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="13dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
         android:ems="10"
         android:hint="약속 카테고리"
         android:inputType="textPersonName"
+        app:layout_constraintBottom_toTopOf="@+id/editTextNumber"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editTextLocation" />
 
@@ -23,6 +38,7 @@
         android:id="@+id/btn_selectDate"
         android:layout_width="90dp"
         android:layout_height="47dp"
+        android:layout_marginTop="72dp"
         android:onClick="onClick"
         android:text="Date"
         app:layout_constraintEnd_toEndOf="parent"
@@ -33,7 +49,7 @@
         android:layout_width="90dp"
         android:layout_height="47dp"
         android:layout_marginStart="308dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:onClick="onClick"
         android:text="Time"
         app:layout_constraintEnd_toEndOf="parent"
@@ -45,11 +61,12 @@
         android:id="@+id/editTextTitle"
         android:layout_width="413dp"
         android:layout_height="47dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:ems="10"
         android:hint="약속 제목"
         android:inputType="textPersonName"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_selectTime" />
 
@@ -57,7 +74,7 @@
         android:id="@+id/editTextTime"
         android:layout_width="295dp"
         android:layout_height="48dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="10dp"
         android:ems="10"
         android:hint="시간 선택"
         android:inputType="textPersonName"
@@ -70,7 +87,7 @@
         android:id="@+id/editTextDate"
         android:layout_width="295dp"
         android:layout_height="48dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="76dp"
         android:ems="10"
         android:hint="날짜 선택"
         android:inputType="textPersonName"
@@ -83,7 +100,7 @@
         android:id="@+id/editTextLocation"
         android:layout_width="295dp"
         android:layout_height="47dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:ems="10"
         android:hint="약속 장소"
         android:inputType="textPersonName"
@@ -92,18 +109,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editTextTitle" />
 
-    <EditText
-        android:id="@+id/editTextNumber"
-        android:layout_width="413dp"
+    <Button
+        android:id="@+id/btn_map"
+        android:layout_width="90dp"
         android:layout_height="47dp"
-        android:layout_marginTop="20dp"
-        android:ems="10"
-        android:hint="약속 인원"
-        android:inputType="textPersonName"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="6dp"
+        android:text="위치 설정"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/editTextCategory"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextCategory" />
+        app:layout_constraintStart_toEndOf="@+id/editTextLocation"
+        app:layout_constraintTop_toBottomOf="@+id/editTextTitle"
+        app:layout_constraintVertical_bias="0.564" />
 
     <Button
         android:id="@+id/button_OK"
@@ -117,19 +136,6 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/btn_map"
-        android:layout_width="90dp"
-        android:layout_height="47dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="6dp"
-        android:text="ㅁ"
-        app:layout_constraintBottom_toTopOf="@+id/editTextCategory"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/editTextLocation"
-        app:layout_constraintTop_toBottomOf="@+id/editTextTitle" />
-
-    <Button
         android:id="@+id/btn_share"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -138,15 +144,16 @@
         android:text="약속 공유"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextNumber" />
+        app:layout_constraintStart_toEndOf="@+id/editTextUID"
+        app:layout_constraintTop_toBottomOf="@+id/editTextNumber"
+        app:layout_constraintVertical_bias="0.888" />
 
     <EditText
         android:id="@+id/editTextUID"
         android:layout_width="300dp"
         android:layout_height="45dp"
-        android:layout_marginStart="15dp"
         android:layout_marginTop="141dp"
-        android:layout_marginEnd="93dp"
+        android:layout_marginEnd="3dp"
         android:layout_marginBottom="69dp"
         android:ems="10"
         android:hint="UID"

@@ -3,9 +3,11 @@ package com.example.project1;
 import static android.content.ContentValues.TAG;
 
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -13,6 +15,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -58,9 +61,11 @@ import java.sql.Time;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 
 public class SubActivity extends AppCompatActivity {
@@ -71,6 +76,8 @@ public class SubActivity extends AppCompatActivity {
     public DatabaseReference databaseReference = database.getReference();
     public TimePickerDialog timePickerDialog;
     public DatePickerDialog datePickerDialog;
+    private AlarmManager alarmManager;
+
 
     private ActivityResultLauncher<Intent> mapActivityResultLauncher;
 
@@ -165,10 +172,66 @@ public class SubActivity extends AppCompatActivity {
                 addDBfile(editTextDate.getText().toString(), editTextTime.getText().toString(),
                         editTextTitle.getText().toString(), editTextLocation.getText().toString(),
                         editTextCategory.getText().toString(), editTextNumber.getText().toString());
-                finish();
+
+                Context context = SubActivity.this;
+                // 알림 예약을 위한 PendingIntent 생성
+
+                Intent notificationIntent1 = new Intent(context, MyBroadcastReceiver.class);
+                notificationIntent1.putExtra("title", "약속 알림");
+                notificationIntent1.putExtra("message", "24시간 후에 약속이 있습니다.");
+                PendingIntent pendingIntent1 = PendingIntent.getBroadcast(context, 0, notificationIntent1, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+                Intent notificationIntent2 = new Intent(context, MyBroadcastReceiver.class);
+                notificationIntent2.putExtra("title", "약속 알림");
+                notificationIntent2.putExtra("message", "3시간 후에 약속이 있습니다.");
+                PendingIntent pendingIntent2 = PendingIntent.getBroadcast(context, 1, notificationIntent2, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+                // editTextDate에서 날짜 값 가져오기
+                String appointmentDate = editTextDate.getText().toString();
+
+                // editTextTime에서 시간 값 가져오기
+                String appointmentTime = editTextTime.getText().toString();
+
+                appointmentTime = appointmentTime.replaceAll("[^0-9:]", "");
+                appointmentTime = appointmentTime.substring(0, 2) + ":" + appointmentTime.substring(2);
+
+                Calendar yourAppointmentTime = Calendar.getInstance();
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+                Date appointmentDateTime = null;
+                try {
+                    appointmentDateTime = sdf.parse(appointmentDate + " " + appointmentTime);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+
+                if (appointmentDateTime != null) {
+                    yourAppointmentTime.setTime(appointmentDateTime);
+
+                    // 약속 시간으로부터 1일 전의 시간 계산
+                    Calendar notificationTime1 = Calendar.getInstance();
+                    notificationTime1.setTime(yourAppointmentTime.getTime()); // 약속 시간 설정
+                    notificationTime1.add(Calendar.DAY_OF_MONTH, -1); // 1일 전으로 설정
+
+                    // 약속 시간으로부터 3시간 전의 시간 계산
+                    Calendar notificationTime2 = Calendar.getInstance();
+                    notificationTime2.setTime(yourAppointmentTime.getTime()); // 약속 시간 설정
+                    notificationTime2.add(Calendar.HOUR_OF_DAY, -3); // 3시간 전으로 설정
+
+                    // AlarmManager를 사용하여 알림 예약
+                    alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                    if (alarmManager != null) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, notificationTime1.getTimeInMillis(), pendingIntent1);
+                            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, notificationTime2.getTimeInMillis(), pendingIntent2);
+                        } else {
+                            alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime1.getTimeInMillis(), pendingIntent1);
+                            alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime2.getTimeInMillis(), pendingIntent2);
+                        }
+                    }
+                    finish();
+                }
             }
         });
-
         btn_share.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

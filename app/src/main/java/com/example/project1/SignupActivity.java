@@ -61,7 +61,7 @@ public class SignupActivity extends AppCompatActivity {
                                     startActivity(intent);
                                 } else {
                                     // 회원가입 실패
-                                    Toast.makeText(getApplicationContext(), "회원가입에 실패했습니다.", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getApplicationContext(), "회원가입에 실패했습니다. 이메일은 ", Toast.LENGTH_SHORT).show();
                                 }
                             }
                         });

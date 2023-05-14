@@ -85,6 +85,7 @@ public class Sharemap extends AppCompatActivity {
             public void onMapViewMoveFinished(MapView mapView, MapPoint mapPoint) {
             }
         });
+        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
 
         ViewGroup mapViewContainer = findViewById(R.id.map_view_container);
         mapViewContainer.addView(mapView);

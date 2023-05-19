@@ -67,7 +67,6 @@ public class SubActivity extends AppCompatActivity {
         setContentView(R.layout.activity_sub2);
 
         Intent intent = getIntent();
-        ArrayList<Integer> data = (ArrayList<Integer>) intent.getSerializableExtra("input");
 
         btn_map = findViewById(R.id.btn_map);
         btn_selectDate = findViewById(R.id.btn_selectDate);
@@ -252,54 +251,6 @@ public class SubActivity extends AppCompatActivity {
             }
         });
     }
-//        btn_share.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                String uid = editTextUID.getText().toString();
-//                DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("DB").child(uid);
-//                DBfile dbfile = new DBfile(editTextDate.getText().toString(), editTextTime.getText().toString(),
-//                        editTextTitle.getText().toString(), editTextLocation.getText().toString(),
-//                        editTextCategory.getText().toString(), editTextNumber.getText().toString());
-//                String eventKey = ref.push().getKey();
-//                if (eventKey != null) {
-//                    ref.child(eventKey).child("date").setValue(dbfile.getDate());
-//                    ref.child(eventKey).child("time").setValue(dbfile.getTime());
-//                    ref.child(eventKey).child("title").setValue(dbfile.getTitle());
-//                    ref.child(eventKey).child("location").setValue(dbfile.getLocation());
-//                    ref.child(eventKey).child("category").setValue(dbfile.getCategory());
-//                    ref.child(eventKey).child("number").setValue(dbfile.getNumber());
-//                    //ref.child(eventKey).child("uid").setValue(dbfile.getUID());
-//                }
-//                editTextUID.setText("");
-//            }
-//        });
-
-/*    public void addDBfile(String Date, String Time, String Title, String Location, String Category, String Number, String[] uidArray) {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
-
-        if (currentUser != null) {
-            String userId = currentUser.getUid();
-            DatabaseReference userRef = databaseRef.child("DB").child(userId);
-
-            DBfile DBfile = new DBfile(Date, Time, Title, Location, Category, Number);
-            String eventKey = userRef.push().getKey();
-
-            if (eventKey != null) {
-                userRef.child(eventKey).child("date").setValue(DBfile.getDate());
-                userRef.child(eventKey).child("time").setValue(DBfile.getTime());
-                userRef.child(eventKey).child("title").setValue(DBfile.getTitle());
-                userRef.child(eventKey).child("location").setValue(DBfile.getLocation());
-                userRef.child(eventKey).child("category").setValue(DBfile.getCategory());
-                userRef.child(eventKey).child("number").setValue(DBfile.getNumber());
-                // userRef.child(eventKey).child("uid").setValue(DBfile.getUID());
-            } else {
-                Log.w(TAG, "Error generating event key");
-            }
-        } else {
-            Log.w(TAG, "No current user");
-        }
-    }*/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -327,12 +278,4 @@ public class SubActivity extends AppCompatActivity {
         }
     }
 
-    public void processDatePickerResult(int year, int month, int day) {
-        String month_string = Integer.toString(month + 1);
-        String day_string = Integer.toString(day);
-        String year_string = Integer.toString(year);
-        String dateMessage = (month_string + "/" + day_string + "/" + year_string);
-
-        Toast.makeText(this, "Date: " + dateMessage, Toast.LENGTH_SHORT).show();
-    }
 }

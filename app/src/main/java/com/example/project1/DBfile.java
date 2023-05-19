@@ -1,9 +1,10 @@
 package com.example.project1;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-public class DBfile {
+public class DBfile implements Serializable {
     String date;
     String time;
     String title;

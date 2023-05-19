@@ -38,10 +38,11 @@
         <activity
             android:name=".month_display"
             android:launchMode="singleTop"/>
-        <activity android:name=".loginActivity2"/>
         <activity android:name=".SignupActivity"/>
         <activity android:name=".SubActivity"/>
         <activity android:name=".MapActivity"/>
+        <activity android:name=".detailActivity"/>
+        <activity android:name=".Sharemap"/>
         <receiver android:name=".MyBroadcastReceiver"
             android:enabled="true"
             android:exported="false">

@@ -57,12 +57,9 @@ public class month_display extends AppCompatActivity {
     private List<String> Arrayevents = new ArrayList<>();
     public FirebaseAuth mAuth;
     public EditText editTextUID;
-    private List<DBfile> allEvents = new ArrayList<>();
     private MaterialCalendarView calendarView;
-    private LocalDate selectedDate;
 
     List<DBfile> events = new ArrayList<>();
-    long notificationTime = System.currentTimeMillis() + (10 * 60 * 1000); // 10분 후의 시간을 밀리초로 계산
 
 
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +72,11 @@ public class month_display extends AppCompatActivity {
         calendarView = findViewById(R.id.calendarView);
         alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
+        for(DBfile dbfile : events){
+            String event = dbfile.getTime() + " " + dbfile.getLocation();
+            Arrayevents.add(event);
+        }
+
         listView = findViewById(R.id.listView);
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, Arrayevents);
         listView.setAdapter(adapter);
@@ -86,27 +88,6 @@ public class month_display extends AppCompatActivity {
                 .setFirstDayOfWeek(Calendar.SUNDAY)
                 .setCalendarDisplayMode(CalendarMode.MONTHS)
                 .commit();
-
-//        valueEventListener = new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-//                    // 데이터베이스에서 날짜 및 시간 값을 가져옴
-//                    String dateString = snapshot.child("date").getValue(String.class);
-//                    String timeString = snapshot.child("time").getValue(String.class);
-//
-//                    // 날짜와 시간 값을 이용하여 알림 예약 작업 설정
-//                    scheduleNotification(dateString, timeString);
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//                // 처리 중 오류 발생 시 처리 로직
-//            }
-//        };
-
-        // fetchEventsFromFirebase();
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         if (!notificationManager.areNotificationsEnabled()) {
@@ -133,6 +114,23 @@ public class month_display extends AppCompatActivity {
             }
         });
 
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // 클릭된 약속의 데이터를 가져옴
+                DBfile selectedDBfile = events.get(position);
+
+                // 약속 상세화면으로 이동하는 Intent 생성
+                Intent intent = new Intent(month_display.this, detailActivity.class);
+
+                // 약속 데이터를 Intent에 추가
+                intent.putExtra("DBfile", selectedDBfile);
+
+                // 약속 상세화면으로 이동
+                startActivity(intent);
+            }
+        });
+
         calendarView.setOnDateChangedListener(new OnDateSelectedListener() {
             @Override
             public void onDateSelected(@NonNull MaterialCalendarView widget, @NonNull CalendarDay date, boolean selected) {
@@ -152,98 +150,8 @@ public class month_display extends AppCompatActivity {
                 calendarView.setDateSelected(date, true);
             }
         });
-
-//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                // 선택된 약속에 대한 상세 정보를 표시하는 액티비티로 이동
-//                String selectedEvent = events.get(position);
-//                Intent intent = new Intent(month_display.this, EventDetailActivity.class);
-//                intent.putExtra("event", selectedEvent);
-//                startActivity(intent);
-//            }
-//        });
     }
 
-//    protected void onDestroy() {
-//        super.onDestroy();
-//
-//        // ValueEventListener 제거
-//        databaseReference.removeEventListener(valueEventListener);
-//    }
-
-//    private void scheduleNotification(String dateString, String timeString) {
-//        try {
-//            // 날짜와 시간을 파싱하여 Calendar 객체에 설정
-//            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-//            Date date = dateFormat.parse(dateString + " " + timeString);
-//
-//            if (date != null) {
-//                // 푸시 알림을 보낼 시간을 3시간 전으로 설정
-//                Calendar notificationTime = Calendar.getInstance();
-//                notificationTime.setTime(date);
-//                notificationTime.add(Calendar.HOUR_OF_DAY, -3);
-//
-//                // 알림을 보낼 때 실행될 BroadcastReceiver를 설정
-//                Intent intent = new Intent(this, MyBroadcastReceiver.class);
-//                PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//                // AlarmManager를 사용하여 알림 예약 작업 설정
-//                AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-//                if (alarmManager != null) {
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, notificationTime.getTimeInMillis(), pendingIntent);
-//                    } else {
-//                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime.getTimeInMillis(), pendingIntent);
-//                    }
-//                }
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-    public List<DBfile> getEventsOnDate(String localDate) {
-        List<DBfile> events = new ArrayList<>();
-        String uid = mAuth.getCurrentUser().getUid();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(uid);
-        // Realtime Database에서 선택한 날짜에 해당하는 약속 정보 가져오기
-        ref.orderByChild("date").equalTo(localDate).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                events.clear();
-
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    String eventKey = snapshot.getKey();
-                    String date = snapshot.child("date").getValue(String.class);
-                    String time = snapshot.child("time").getValue(String.class);
-                    String title = snapshot.child("title").getValue(String.class);
-                    String location = snapshot.child("location").getValue(String.class);
-                    String category = snapshot.child("category").getValue(String.class);
-                    String number = snapshot.child("number").getValue(String.class);
-                    List<String> uid = new ArrayList<>();
-                    for (DataSnapshot uidSnapshot : snapshot.child("uid").getChildren()) {
-                        String uidValue = uidSnapshot.getValue(String.class);
-                        uid.add(uidValue);
-                    }
-                    DBfile dbfile = new DBfile(date, time, title, location, category, number, uid);
-                    events.add(dbfile);
-                }
-
-                // 가져온 약속 정보를 이용해서 달력 아래쪽에 약속 정보 보여주는 메소드 호출
-                showEvents(events);
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle error
-            }
-
-        });
-
-        return events;
-    }
     private void showEvents(List<DBfile> events) {
         if (events.size() > 0) {
             List<String> eventStrings = new ArrayList<>();
@@ -295,53 +203,6 @@ public class month_display extends AppCompatActivity {
             }
         });
     }
-
-//    private void scheduleNotification(List<DBfile> events) {
-//        // 예약된 알림을 모두 취소
-//        cancelAllNotifications();
-//
-//        // 예약된 시간 전에 알림 예약
-//        for (DBfile event : events) {
-//            // 예약 시간 가져오기
-//            String eventDateTime = event.getDate() + " " + event.getTime();
-//            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-//            try {
-//                Date eventDate = sdf.parse(eventDateTime);
-//                if (eventDate != null) {
-//                    // 예약 시간에서 일정 시간 전으로 설정 (예: 10분 전)
-//                    Calendar cal = Calendar.getInstance();
-//                    cal.setTime(eventDate);
-//                    cal.add(Calendar.MINUTE, -10); // 예약하고자 하는 시간의 일정 분 전으로 설정
-//
-//                    // 알림 예약
-//                    scheduleNotification(cal.getTime(), event.getTitle(), event.getLocation());
-//                }
-//            } catch (ParseException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-//
-//    private void scheduleNotification(Date notificationTime, String title, String location) {
-//        Intent intent = new Intent(this, MyBroadcastReceiver.class);
-//        intent.putExtra("title", title);
-//        intent.putExtra("message", location);
-//
-//        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-//        alarmManager.set(AlarmManager.RTC_WAKEUP, notificationTime.getTime(), pendingIntent);
-//    }
-//
-//    private void cancelAllNotifications() {
-//        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-//        Intent intent = new Intent(this, MyBroadcastReceiver.class);
-//        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-//        if (pendingIntent != null) {
-//            alarmManager.cancel(pendingIntent);
-//            pendingIntent.cancel();
-//        }
-//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

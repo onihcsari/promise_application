@@ -10,4 +10,5 @@ public interface KakaoMapApi {
     @GET("/v2/local/search/keyword.json")
     Call<SearchResult> searchPlace(@Header("Authorization") String authHeader,
                                    @Query("query") String query);
+
 }

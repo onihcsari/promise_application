@@ -1,6 +1,7 @@
 package com.example.project1;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -21,6 +22,7 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -33,8 +35,16 @@ import net.daum.mf.map.api.MapPOIItem;
 import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapView;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Sharemap extends AppCompatActivity {
 
@@ -45,20 +55,44 @@ public class Sharemap extends AppCompatActivity {
     private LocationRequest locationRequest;
     private DatabaseReference databaseReference;
     public FirebaseAuth mAuth;
+    private List<String> uidList;
+    private String destination;
+    private boolean isFirstLocationUpdate = true;
+
+    private KakaoMapApi kakaoMapApi;
+    private static final String BASE_URL = "https://dapi.kakao.com";
+    private static final String KAKAO_API_KEY = "0b289b1ef91f12a6ae8a369ddd779e6a";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+        uidList = new ArrayList<String>();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        kakaoMapApi = retrofit.create(KakaoMapApi.class);
 
         databaseReference = FirebaseDatabase.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
-        String uid = mAuth.getCurrentUser().getUid();
+
+        Intent intent = getIntent();
+        DBfile dbfile = (DBfile) intent.getSerializableExtra("dbfile");
+        uidList = dbfile.getUid();
+        destination = dbfile.getLocation();
 
         mapView = new MapView(this);
         mapView.setMapViewEventListener(new MapView.MapViewEventListener() {
             @Override
             public void onMapViewInitialized(MapView mapView) {
+                if (isFirstLocationUpdate) {
+                    moveMapToCurrentLocation();
+                    isFirstLocationUpdate = false;
+                }
             }
             @Override
             public void onMapViewCenterPointMoved(MapView mapView, MapPoint mapPoint) {
@@ -85,7 +119,7 @@ public class Sharemap extends AppCompatActivity {
             public void onMapViewMoveFinished(MapView mapView, MapPoint mapPoint) {
             }
         });
-        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
+        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOff);
 
         ViewGroup mapViewContainer = findViewById(R.id.map_view_container);
         mapViewContainer.addView(mapView);
@@ -115,7 +149,7 @@ public class Sharemap extends AppCompatActivity {
 
         // 위치 업데이트 시작
         startLocationUpdates();
-        loadOtherUserLocations();
+        loadUserLocations(uidList);
 
         // 위치 권한 확인 및 요청
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -128,8 +162,10 @@ public class Sharemap extends AppCompatActivity {
             saveLocation(userLocation);
 
             // Firebase Realtime Database에서 다른 사용자의 위치 정보를 가져옵니다.
-            loadOtherUserLocations();
+            loadUserLocations(uidList);
         }
+
+        searchPlace(destination);
     }
 
     // 사용자의 현재 위치를 Location 객체로 반환하는 메소드입니다.
@@ -173,9 +209,6 @@ public class Sharemap extends AppCompatActivity {
             double longitude = userLocation.getLongitude();
             String userId = FirebaseAuth.getInstance().getCurrentUser().getUid(); // 사용자 고유 ID로 변경해야 합니다.
 
-//            Map<String, Object> locationData = new HashMap<>();
-//            locationData.put("latitude", latitude);
-//            locationData.put("longitude", longitude);
             SerializableLocation locationData = new SerializableLocation(latitude, longitude);
 
             databaseReference.child(userId).setValue(locationData);
@@ -183,26 +216,30 @@ public class Sharemap extends AppCompatActivity {
     }
 
     // Firebase Realtime Database에서 다른 사용자의 위치 정보를 가져오는 메소드입니다.
-    private void loadOtherUserLocations() {
-        String uid = mAuth.getCurrentUser().getUid(); // 현재 사용자의 UID 가져오기
+    private void loadUserLocations(List<String> uidList) {
         databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String previousChildName) {
                 String userId = dataSnapshot.getKey();
-                if (!userId.equals(uid)) { // 현재 사용자의 UID와 다른 사용자의 UID 비교
+                if (uidList.contains(userId)) { // 현재 사용자의 UID와 다른 사용자의 UID 비교
                     SerializableLocation location = dataSnapshot.getValue(SerializableLocation.class);
                     if (location != null) {
                         mapView.removeAllPOIItems(); // 기존 마커 제거
                         updateMarker(userId, location.getLatitude(), location.getLongitude());
+                        searchPlace(destination);
                     }
                 }
             }
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String previousChildName) {
-                SerializableLocation location = dataSnapshot.getValue(SerializableLocation.class);
-                if (location != null) {
-                    mapView.removeAllPOIItems(); // 기존 마커 제거
-                    updateMarker(dataSnapshot.getKey(), location.getLatitude(), location.getLongitude());
+                String userId = dataSnapshot.getKey();
+                if (uidList.contains(userId)) {
+                    SerializableLocation location = dataSnapshot.getValue(SerializableLocation.class);
+                    if (location != null) {
+                        mapView.removeAllPOIItems(); // 기존 마커 제거
+                        updateMarker(userId, location.getLatitude(), location.getLongitude());
+                        searchPlace(destination);
+                    }
                 }
             }
             @Override
@@ -238,6 +275,7 @@ public class Sharemap extends AppCompatActivity {
                 Log.w("MapActivity", "Failed to read value.", databaseError.toException());
             }
         });
+
     }
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -255,7 +293,7 @@ public class Sharemap extends AppCompatActivity {
                 // 위치 권한이 허용되었을 때 처리
                 Location userLocation = getUserLocation();
                 saveLocation(userLocation);
-                loadOtherUserLocations();
+                loadUserLocations(uidList);
             } else {
                 // 위치 권한이 거부되었을 때 처리
             }
@@ -268,46 +306,71 @@ public class Sharemap extends AppCompatActivity {
         marker.setTag(0);
         marker.setMapPoint(MapPoint.mapPointWithGeoCoord(latitude, longitude));
         if (userId.equals(mAuth.getCurrentUser().getUid())) {
+            marker.setItemName("나의 위치");
             marker.setMarkerType(MapPOIItem.MarkerType.BluePin); // 내 마커인 경우 파란색
             marker.setSelectedMarkerType(MapPOIItem.MarkerType.BluePin);
         } else {
+            marker.setItemName("상대의 위치");
             marker.setMarkerType(MapPOIItem.MarkerType.RedPin); // 다른 사용자의 마커인 경우 빨간색
             marker.setSelectedMarkerType(MapPOIItem.MarkerType.RedPin);
         }
 
         mapView.addPOIItem(marker);
     }
+    private void moveMapToCurrentLocation() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    if (location != null) {
+                        mapView.setMapCenterPoint(MapPoint.mapPointWithGeoCoord(location.getLatitude(), location.getLongitude()), true);
+                    }
+                }
+            });
+        }
+    }
+    private void searchPlace(String location) {
+        // Kakao Maps API를 사용하여 위치 검색
+        kakaoMapApi.searchPlace("KakaoAK " + KAKAO_API_KEY, location).enqueue(new Callback<SearchResult>() {
+            @Override
+            public void onResponse(Call<SearchResult> call, Response<SearchResult> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<SearchResult.Document> documents = response.body().documents;
+                    if (!documents.isEmpty()) {
 
-//    private void loadOtherUsersLocations() {
-//        databaseReference.addChildEventListener(new ChildEventListener() {
-//            @Override
-//            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-//                Location location = dataSnapshot.getValue(Location.class);
-//                if (location != null) {
-//                    updateMarker(dataSnapshot.getKey(), location.getLatitude(), location.getLongitude());
-//                }
-//            }
-//
-//            @Override
-//            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-//                Location location = dataSnapshot.getValue(Location.class);
-//                if (location != null) {
-//                    updateMarker(dataSnapshot.getKey(), location.getLatitude(), location.getLongitude());
-//                }
-//            }
-//
-//            @Override
-//            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-//            }
-//
-//            @Override
-//            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//            }
-//        });
-//    }
+                        SearchResult.Document document = documents.get(0);
+                        if (document.place_name.equals(location)) {
+                            double latitude = document.latitude;
+                            double longitude = document.longitude;
+                            showLocationOnMap(latitude, longitude);
+                        } else {
+                            SearchResult.Document document2 = documents.get(1);
+                            double latitude = document2.latitude;
+                            double longitude = document2.longitude;
+                            showLocationOnMap(latitude, longitude);
+                        }
+                        // 좌표를 이용하여 지도에 마커 표시 등의 작업 수행
+                    }
+                }
+            }
 
+            @Override
+            public void onFailure(Call<SearchResult> call, Throwable t) {
+                // 실패 처리
+            }
+        });
+    }
+
+    private void showLocationOnMap(double latitude, double longitude) {
+
+        // 마커 추가
+        MapPOIItem marker = new MapPOIItem();
+        marker.setItemName("목적지");
+        marker.setTag(0);
+        marker.setMapPoint(MapPoint.mapPointWithGeoCoord(latitude, longitude));
+        marker.setMarkerType(MapPOIItem.MarkerType.YellowPin); // 기본적인 BluePin 마커 사용
+        marker.setSelectedMarkerType(MapPOIItem.MarkerType.YellowPin); // 마커 선택 시 RedPin 마커 사용
+
+        mapView.addPOIItem(marker);
+    }
 }

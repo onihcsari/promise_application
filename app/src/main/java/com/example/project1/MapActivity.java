@@ -1,10 +1,8 @@
 package com.example.project1;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,7 +45,6 @@ public class MapActivity extends AppCompatActivity implements MapView.CurrentLoc
         setContentView(R.layout.activity_map);
 
         mapView = new MapView(this);
-        // mapView.setCurrentLocationEventListener(this);
         mapView.setShowCurrentLocationMarker(true);
         mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
         mapView.setMapViewEventListener(this);
@@ -66,7 +63,6 @@ public class MapActivity extends AppCompatActivity implements MapView.CurrentLoc
             }
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // searchPlace(s.toString());
             }
             @Override
             public void afterTextChanged(Editable s) {

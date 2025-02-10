@@ -1,8 +1,5 @@
-개인의 약속 및 스케쥴 관리에 도움을 주는 어플리케이션으로 여러 기능을 제공합니다.
-
-1. 약속의 내용을 작성후 개개인에게 부여되는 UID를 입력함으로써 간단하고 빠르게 약속 공유 가능
-2. 캘린더 형식으로 월, 주간의 약속을 손쉽게 확인 가능
-3. 약속 당일 정해진 시간에 푸시알림 전송
-4. 약속 당일 일정시간 전부터 같은 약속에 참여한 사람들 간의 GPS공유 기능(카카오맵 API 사용)
-5. 약속시간 약속장소 인근 도착 시 활성화되는 도착버튼 제공
-6. 필요 시 위 도착버튼을 통한 지각비 기능 추가 예정
+![설명 텍스트](https://github.com/onihcsari/promise_application/tree/master/app/약속어플_로그인화면.png)
+![설명 텍스트](https://github.com/onihcsari/promise_application/tree/master/app/약속어플_약속상세화면.png)
+![설명 텍스트](https://github.com/onihcsari/promise_application/tree/master/app/약속어플_약속설정화면.png)
+![설명 텍스트](https://github.com/onihcsari/promise_application/tree/master/app/약속어플_약속위치확인화면.png)
+![설명 텍스트](https://github.com/onihcsari/promise_application/tree/master/app/약속어플_약속푸시알림화면.png)
